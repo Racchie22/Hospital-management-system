@@ -1,2 +1,2 @@
-# Hospital-management-system1
+# Hospital-management-system
 SDF-II project
