@@ -1,6 +1,6 @@
 # Hospital-management-system
 SDF-II project
 Project Workers
-1.Rachit 
-2.Aditya
-3.Vansh
+1.Rachit Agrawal
+2.Aditya Bharadwaj
+3.Vansh Sharma
