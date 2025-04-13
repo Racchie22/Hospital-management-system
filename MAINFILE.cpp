@@ -36,81 +36,23 @@ class patient : public person{
     int appointmentstatus=0; //0= not booked,1=pending,2 = confirmed ->this will be changed from staff menu
 
     public :
+    string getID() { return patientid; }
+    string getname() { return name; }
+    int getage() { return age; }
+    char getgender() { return gender; }
+    string getbloodgroup() { return bloodgp; }
+    string getcontact() { return contact; }
+    string getaddress() { return address; }
+    int getdepartment() { return requiredep; }
+    int getappointmentstatus() { return appointmentstatus; }
 
-    void createpat(){
-        cout<<"Hello patient kindly enter the asked details correctly ! \n";
-        cout<<"Enter your Aame : ";
-        cin>>name;
-        cout<<"Enter your Age : ";
-        cin>>age;
-        cout<<"Enter your Gender : ";
-        cin>>gender;
-        cout<<"Enter your blood group : ";
-        cin>>bloodgp;
-        cout<<"Enter your contact details (10 digit valid phone number) : ";
-        cin>>contact;
-        cout<<"Enter your address : ";
-        getchar();
-        getline(cin,address);
-        //patient id will be created automatically  related to its name, contact,gender,bloodgrp,age 
-        generatePatientID();
-        cout<<"Registration is done successfully !! \n";
-        cout<<"Your patient id is : "<<patientid<<endl;
-    }
-
-    void loadpat(string patid) {
-        ifstream fin("patients.txt");
-        string id;
-        while (fin >> id) {
-            if (id == patid) {
-                patientid = id;
-                fin >> name >> age >> gender >> bloodgp >> contact;
-                //fin.ignore(); // skip space before getline
-                getline(fin, address, '|'); // read address until |
-                fin >> requiredep>>appointmentstatus; // read required department
-                break;
-            } else {
-                string temp;
-                getline(fin, temp); // skip rest of the line
-            }
-        }
-        fin.close();
-    
-        cout << "\nPatient data loaded successfully!\n";
-        cout << "Name: " << name << "\nAge: " << age << "\nGender: " << gender << "\nBlood Group: " << bloodgp;
-        cout << "\nContact: " << contact << "\nAddress: " << address << "\nRequired Dept: " << requiredep << "\nAppointment Status : "<<appointmentstatus<<endl;
-    }
-
-    void generatePatientID() {
-        string idName = name.substr(0, 3);  // First 3 letters of name
-        string idContact = contact.substr(contact.length() - 4); // Last 4 digits of contact
-    
-        patientid = "PAT" + idName + gender + to_string(age) + idContact +  bloodgp ;
-    }
-
-    void showAppointmentStatus() {
-        cout << "Your Appointment Status : ";
-
-        switch (appointmentstatus) {
-            case 0: cout << "No Appointment Booked\n"; break;
-            case 1: cout << "Pending Confirmation\n"; break;
-            case 2: cout << "Confirmed\n"; break;
-            default: cout << "Unknown Status\n"; break;
-        }
-    }
-
-    void savepat() {
-        ofstream fout("patients.txt", ios::app); // open in append mode
-        if (!fout) {
-            cout << "Error opening file to save patient data.\n";
-            return;
-        }
-        
-        fout<<patientid<<" "<<name<<" "<<age<<" "<<gender<<" "<<bloodgp<<" "<<contact<<" "<<address<<'|'<<requiredep<<" "<<appointmentstatus<<"\n";
-        fout.close();
-        //cout << "Patient data saved successfully.\n";
-    }
-
+    void createpat();
+    void loadpat(string patid);
+    void generatePatientID();
+    void showAppointmentStatus();
+    void savepat();
+    void healthanalysis();
+    void addappointment(int dep);
 };
 
 class employee : public person{
@@ -125,6 +67,8 @@ class employee : public person{
 
 int findpatient(string patid);  // this function finds the entered patient id from patient file
 void patientmenu(patient* pat); //this function gives choices to patient and the progrmme coninues further
+void saveupdatedpat(patient* pat);
+
 
 int main(){
     int user;
@@ -171,6 +115,7 @@ int main(){
             break;
 
             case 3:
+
             return 0;
             break;
 
@@ -180,6 +125,34 @@ int main(){
         }
     }
     return 0;
+}
+
+void saveupdatedpat(patient* pat){
+    ifstream fin("patients.txt");
+    ofstream fout("temp.txt");
+
+    string id;
+    while (fin >> id) {
+        if (id == pat->getID()) {
+            // Skip old entry and write updated one
+            string skip;
+            getline(fin, skip); // skip rest of old line
+            fout << pat->getID() << " " << pat->getname() << " " << pat->getage() << " " 
+                 << pat->getgender() << " " << pat->getbloodgroup() << " " << pat->getcontact() << " " 
+                 << pat->getaddress() << '|' << pat->getdepartment() << " " << pat->getappointmentstatus() << "\n";
+        } else {
+            string rest;
+            getline(fin, rest);
+            fout << id << rest << "\n";
+        }
+    }
+
+    fin.close();
+    fout.close();
+
+    remove("patients.txt");
+    rename("temp.txt", "patients.txt");
+    cout << "Patient record updated successfully!\n";
 }
 
 int findpatient(string patid) {
@@ -212,9 +185,18 @@ void patientmenu(patient* pat){
 
         switch(choice){
             case 1:
-
+            pat->healthanalysis();
             break;
             case 2:
+            cout<<"In which Departments you want appointment : "<<endl;
+            for (auto dept : departmentNames) {
+                if (dept.first == 0) continue; // skip 'No Department' for selection
+                cout << dept.first << ". " << dept.second << endl;
+            }
+            cout<<"Your Response : ";
+            int dep;
+            cin>>dep;
+            pat->addappointment(dep);
 
             break;
             case 3:
@@ -235,5 +217,102 @@ void patientmenu(patient* pat){
 
             break;
         }
+    }
+}
+
+void patient :: createpat(){
+    cout<<"Hello patient kindly enter the asked details correctly ! \n";
+    cout<<"Enter your Aame : ";
+    cin>>name;
+    cout<<"Enter your Age : ";
+    cin>>age;
+    cout<<"Enter your Gender : ";
+    cin>>gender;
+    cout<<"Enter your blood group : ";
+    cin>>bloodgp;
+    cout<<"Enter your contact details (10 digit valid phone number) : ";
+    cin>>contact;
+    cout<<"Enter your address : ";
+    getchar();
+    getline(cin,address);
+    //patient id will be created automatically  related to its name, contact,gender,bloodgrp,age 
+    generatePatientID();
+    cout<<"Registration is done successfully !! \n";
+    cout<<"Your patient id is : "<<patientid<<endl;
+}
+
+void patient :: loadpat(string patid) {
+    ifstream fin("patients.txt");
+    string id;
+    while (fin >> id) {
+        if (id == patid) {
+            patientid = id;
+            fin >> name >> age >> gender >> bloodgp >> contact;
+            //fin.ignore(); // skip space before getline
+            getline(fin, address, '|'); // read address until |
+            fin >> requiredep>>appointmentstatus; // read required department
+            break;
+        } else {
+            string temp;
+            getline(fin, temp); // skip rest of the line
+        }
+    }
+    fin.close();
+
+    cout << "\nPatient data loaded successfully!\n";
+    cout << "Name: " << name << "\nAge: " << age << "\nGender: " << gender << "\nBlood Group: " << bloodgp;
+    cout << "\nContact: " << contact << "\nAddress: " << address << "\nRequired Dept: " << requiredep << "\nAppointment Status : "<<appointmentstatus<<endl;
+}
+
+void patient:: generatePatientID() {
+    string idName = name.substr(0, 3);  // First 3 letters of name
+    string idContact = contact.substr(contact.length() - 4); // Last 4 digits of contact
+
+    patientid = "PAT" + idName + gender + to_string(age) + idContact +  bloodgp ;
+}
+
+void patient :: showAppointmentStatus() {
+    cout << "Your Appointment Status : ";
+
+    switch (appointmentstatus) {
+        case 0: cout << "No Appointment Booked\n"; break;
+        case 1: cout << "Pending Confirmation\n"; break;
+        case 2: cout << "Confirmed\n"; break;
+        default: cout << "Unknown Status\n"; break;
+    }
+}
+
+void patient::savepat() {
+    ofstream fout("patients.txt", ios::app); // open in append mode
+    if (!fout) {
+        cout << "Error opening file to save patient data.\n";
+        return;
+    }
+    
+    fout<<patientid<<" "<<name<<" "<<age<<" "<<gender<<" "<<bloodgp<<" "<<contact<<" "<<address<<'|'<<requiredep<<" "<<appointmentstatus<<"\n";
+    fout.close();
+    //cout << "Patient data saved successfully.\n";
+}
+
+void patient :: healthanalysis(){
+    cout<<"-----QUICK HEALTH ANALYSIS PACKAGES------"<<endl;
+    cout << "1. Basic Health Checkup(Rs 2000) -\n";
+    cout << "2. Advanced Checkup(Rs 4000) -\n";
+    cout << "3. Diabetes Panel(Rs 3000) -\n";
+    cout << "4. Heart Care Package(Rs 5000) - \n";
+    cout << "5. Full Body Checkup(Rs 7000) -\n";
+    cout << "Select a package (1-5): ";
+
+}
+
+void patient :: addappointment(int dep) {
+    if (departmentNames.find(dep) != departmentNames.end() && dep != 0) {
+        requiredep = dep;
+        appointmentstatus = 1; // appointment requested, pending confirmation
+        cout << "Appointment request sent to department : " << departmentNames[dep] << "\n";
+        cout << "Your status is now set to : Pending\n\n";
+        saveupdatedpat(this);
+    } else {
+        cout << "Invalid department selected!\n";
     }
 }
